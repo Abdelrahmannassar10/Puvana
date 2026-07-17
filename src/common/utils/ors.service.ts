@@ -3,11 +3,18 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { Coord, RankedStop } from '../interface/geo.interface';
 
+export interface DirectionsResult {
+  polyline: { lat: number; lng: number }[];
+  distanceMeters: number;
+  durationSeconds: number;
+}
+
 @Injectable()
 export class OrsService {
   private readonly logger = new Logger(OrsService.name);
   private readonly apiKey: string;
-  private readonly baseUrl = 'https://api.openrouteservice.org/v2/matrix/driving-car';
+  private readonly matrixUrl = 'https://api.openrouteservice.org/v2/matrix/driving-car';
+  private readonly directionsUrl = 'https://api.openrouteservice.org/v2/directions/driving-car';
 
   constructor(private readonly config: ConfigService) {
     this.apiKey = this.config.get<string>('ORS_API_KEY')?.trim() || '';
@@ -75,7 +82,7 @@ export class OrsService {
     };
 
     try {
-      const response = await axios.post(this.baseUrl, payload, {
+      const response = await axios.post(this.matrixUrl, payload, {
         headers: this.getHeaders(),
         timeout: 10000,
       });
@@ -97,6 +104,51 @@ export class OrsService {
       const status = err.response?.status;
       this.logger.warn(`ORS matrix request failed${status ? ` (${status})` : ''}: ${err.message}. Falling back to local routing.`);
       return this.getFallbackDurations(origin, destinations);
+    }
+  }
+
+  async getDirections(origin: Coord, destination: Coord): Promise<DirectionsResult | null> {
+    if (!this.apiKey) {
+      this.logger.warn('ORS API key missing, cannot fetch directions');
+      return null;
+    }
+
+    try {
+      const response = await axios.post(
+        this.directionsUrl + '/geojson',
+        {
+          coordinates: [
+            [origin.lng, origin.lat],
+            [destination.lng, destination.lat],
+          ],
+        },
+        {
+          headers: {
+            Authorization: this.apiKey,
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000,
+        },
+      );
+
+      const data = response.data;
+      const feature = data?.features?.[0];
+      if (!feature) return null;
+
+      const coords = feature.geometry?.coordinates as number[][] | undefined;
+      if (!coords?.length) return null;
+
+      const polyline = coords.map((c: number[]) => ({ lat: c[1], lng: c[0] }));
+      const summary = feature.properties?.summary;
+
+      return {
+        polyline,
+        distanceMeters: summary?.distance ?? 0,
+        durationSeconds: summary?.duration ?? 0,
+      };
+    } catch (err: any) {
+      this.logger.warn(`ORS directions request failed: ${err.message}`);
+      return null;
     }
   }
 

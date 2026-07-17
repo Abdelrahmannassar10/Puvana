@@ -4,6 +4,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AuthUser } from '../../common/strategies/jwt.strategy';
+import { OrsService } from '../../common/utils/ors.service';
 import { DriversService } from './drivers.service';
 import { SavedLocationsService } from '../saved-locations/saved-locations.service';
 import { DailyRoutesService } from '../daily-routes/daily-routes.service';
@@ -11,6 +12,7 @@ import { CreateSavedLocationDto } from '../saved-locations/dto/create-saved-loca
 import { PlanDailyRouteDto } from '../daily-routes/dto/plan-daily-route.dto';
 import { UpdateStopStatusDto } from '../daily-routes/dto/update-stop-status.dto';
 import { ModifyRouteDto } from '../daily-routes/dto/modify-route.dto';
+import { GetDirectionsDto } from '../daily-routes/dto/get-directions.dto';
 
 @Controller('drivers')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -19,6 +21,7 @@ export class DriverController {
     private readonly driversService: DriversService,
     private readonly savedLocationsService: SavedLocationsService,
     private readonly dailyRoutesService: DailyRoutesService,
+    private readonly orsService: OrsService,
   ) {}
 
   @Get('me')
@@ -67,5 +70,22 @@ export class DriverController {
   @Roles('driver')
   modifyActiveRoute(@CurrentUser() user: AuthUser, @Body() dto: ModifyRouteDto) {
     return this.dailyRoutesService.modifyActiveRoute(user.userId, dto);
+  }
+
+  @Post('me/daily-route/directions')
+  @Roles('driver')
+  async getDirections(@Body() dto: GetDirectionsDto) {
+    const result = await this.orsService.getDirections(
+      { lat: dto.originLat, lng: dto.originLng },
+      { lat: dto.destLat, lng: dto.destLng },
+    );
+    if (!result) {
+      const fallbackPolyline = [
+        { lat: dto.originLat, lng: dto.originLng },
+        { lat: dto.destLat, lng: dto.destLng },
+      ];
+      return { polyline: fallbackPolyline, distanceMeters: 0, durationSeconds: 0 };
+    }
+    return result;
   }
 }

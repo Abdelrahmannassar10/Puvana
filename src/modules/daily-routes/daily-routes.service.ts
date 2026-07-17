@@ -29,7 +29,7 @@ export class DailyRoutesService {
     const today = this.getTodayDate();
     const existing = await this.dailyRouteModel.findOne({ driverId: new Types.ObjectId(driverId), date: today });
 
-    if (existing && existing.status !== 'planned') {
+    if (existing && existing.status === 'in_progress') {
       return existing;
     }
 

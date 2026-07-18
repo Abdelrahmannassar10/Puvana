@@ -47,8 +47,9 @@ export class AdminService {
     return this.driverModel.find().select('-passwordHash').sort({ createdAt: -1 }).exec();
   }
 
-  async listRoutes(): Promise<DailyRouteDocument[]> {
-    return this.dailyRouteModel.find().sort({ date: -1, createdAt: -1 }).exec();
+  async listRoutes(driverId?: string): Promise<DailyRouteDocument[]> {
+    const filter = driverId ? { driverId: new Types.ObjectId(driverId) } : {};
+    return this.dailyRouteModel.find(filter).sort({ date: -1, createdAt: -1 }).exec();
   }
 
   async getRouteById(routeId: string): Promise<DailyRouteDocument> {

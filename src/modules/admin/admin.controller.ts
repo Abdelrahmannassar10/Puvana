@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CreateDriverAdminDto } from './dto/create-driver-admin.dto';
 import { CreateAdminDto } from './dto/create-admin.dto';
@@ -31,8 +31,8 @@ export class AdminController {
 
   @Get('routes')
   @Roles('admin')
-  listRoutes() {
-    return this.adminService.listRoutes();
+  listRoutes(@Query('driverId') driverId?: string) {
+    return this.adminService.listRoutes(driverId);
   }
 
   @Get('routes/:routeId')

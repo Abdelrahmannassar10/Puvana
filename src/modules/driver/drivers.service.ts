@@ -41,6 +41,13 @@ export class DriversService {
     return driver;
   }
 
+  async setOnlineStatus(id: string, isOnline: boolean): Promise<Driver> {
+    const driver = await this.findById(id);
+    driver.isOnline = isOnline;
+    await driver.save();
+    return driver;
+  }
+
   async remove(id: string): Promise<void> {
     const result = await this.driverModel.findByIdAndDelete(id);
     if (!result) throw new NotFoundException('Driver not found');

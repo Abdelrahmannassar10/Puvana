@@ -15,7 +15,10 @@ export class Driver {
   name: string;
 
   @Prop({ default: true })
-  isActive: boolean; // false = suspended by admin, blocks login + all API calls
+  isActive: boolean;
+
+  @Prop({ default: false })
+  isOnline: boolean;
 }
 
 export const DriverSchema = SchemaFactory.createForClass(Driver);

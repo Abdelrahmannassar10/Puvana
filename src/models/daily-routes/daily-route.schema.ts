@@ -60,4 +60,4 @@ export class DailyRoute {
 
 export const DailyRouteSchema = SchemaFactory.createForClass(DailyRoute);
 
-DailyRouteSchema.index({ driverId: 1, date: 1 }, { unique: true });
+DailyRouteSchema.index({ driverId: 1, date: 1 });

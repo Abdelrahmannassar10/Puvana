@@ -8,11 +8,13 @@ import { OrsService } from '../../common/utils/ors.service';
 import { DriversService } from './drivers.service';
 import { SavedLocationsService } from '../saved-locations/saved-locations.service';
 import { DailyRoutesService } from '../daily-routes/daily-routes.service';
+import { DriverLocationsService } from '../driver-locations/driver-locations.service';
 import { CreateSavedLocationDto } from '../saved-locations/dto/create-saved-location.dto';
 import { PlanDailyRouteDto } from '../daily-routes/dto/plan-daily-route.dto';
 import { UpdateStopStatusDto } from '../daily-routes/dto/update-stop-status.dto';
 import { ModifyRouteDto } from '../daily-routes/dto/modify-route.dto';
 import { GetDirectionsDto } from '../daily-routes/dto/get-directions.dto';
+import { UpdateLocationDto } from './dto/update-location.dto';
 
 @Controller('drivers')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -21,6 +23,7 @@ export class DriverController {
     private readonly driversService: DriversService,
     private readonly savedLocationsService: SavedLocationsService,
     private readonly dailyRoutesService: DailyRoutesService,
+    private readonly driverLocationsService: DriverLocationsService,
     private readonly orsService: OrsService,
   ) {}
 
@@ -87,5 +90,17 @@ export class DriverController {
       return { polyline: fallbackPolyline, distanceMeters: 0, durationSeconds: 0 };
     }
     return result;
+  }
+
+  @Patch('me/online-status')
+  @Roles('driver')
+  async toggleOnlineStatus(@CurrentUser() user: AuthUser, @Body('isOnline') isOnline: boolean) {
+    return this.driversService.setOnlineStatus(user.userId, isOnline);
+  }
+
+  @Post('me/location')
+  @Roles('driver')
+  async updateLocation(@CurrentUser() user: AuthUser, @Body() dto: UpdateLocationDto) {
+    return this.driverLocationsService.updateLocation(user.userId, dto.lat, dto.lng);
   }
 }

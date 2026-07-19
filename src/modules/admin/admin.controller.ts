@@ -5,11 +5,15 @@ import { CreateAdminDto } from './dto/create-admin.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { DriverLocationsService } from '../driver-locations/driver-locations.service';
 
 @Controller('admin')
 // @UseGuards(JwtAuthGuard, RolesGuard)
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly driverLocationsService: DriverLocationsService,
+  ) {}
 
   @Post('seed')
   // @Roles('admin')
@@ -51,5 +55,11 @@ export class AdminController {
   @Roles('admin')
   deleteDriver(@Param('driverId') driverId: string) {
     return this.adminService.deleteDriver(driverId);
+  }
+
+  @Get('drivers/:driverId/location')
+  @Roles('admin')
+  getDriverLocation(@Param('driverId') driverId: string) {
+    return this.driverLocationsService.getLatestLocation(driverId);
   }
 }

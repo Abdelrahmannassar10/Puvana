@@ -27,10 +27,14 @@ export class DailyRoutesService {
 
   async planRoute(driverId: string, dto: PlanDailyRouteDto): Promise<DailyRouteDocument> {
     const today = this.getTodayDate();
-    const existing = await this.dailyRouteModel.findOne({ driverId: new Types.ObjectId(driverId), date: today });
+    const inProgress = await this.dailyRouteModel.findOne({
+      driverId: new Types.ObjectId(driverId),
+      date: today,
+      status: 'in_progress',
+    });
 
-    if (existing && existing.status === 'in_progress') {
-      return existing;
+    if (inProgress) {
+      return inProgress;
     }
 
     const origin: Coord = { lat: dto.currentLat, lng: dto.currentLng };
@@ -55,29 +59,42 @@ export class DailyRoutesService {
       distanceMeters: item.distanceMeters,
     }));
 
-    const route = await this.dailyRouteModel.findOneAndUpdate(
-      { driverId: new Types.ObjectId(driverId), date: today },
-      {
-        driverId: new Types.ObjectId(driverId),
-        date: today,
-        status: 'planned',
-        stops,
-        currentStopIndex: stops.length ? 0 : -1,
-      },
-      { new: true, upsert: true, setDefaultsOnInsert: true },
-    );
+    const route = await this.dailyRouteModel.create({
+      driverId: new Types.ObjectId(driverId),
+      date: today,
+      status: 'planned',
+      stops,
+      currentStopIndex: stops.length ? 0 : -1,
+    });
 
     return route;
   }
 
+  async getActiveRoute(driverId: string): Promise<DailyRouteDocument | null> {
+    const today = this.getTodayDate();
+    return this.dailyRouteModel.findOne({
+      driverId: new Types.ObjectId(driverId),
+      date: today,
+      status: { $in: ['in_progress', 'planned'] },
+    }).sort({ createdAt: -1 }).exec();
+  }
+
   async getTodayRoute(driverId: string): Promise<DailyRouteDocument | null> {
-    return this.dailyRouteModel.findOne({ driverId: new Types.ObjectId(driverId), date: this.getTodayDate() }).exec();
+    const active = await this.getActiveRoute(driverId);
+    if (active) return active;
+    return this.dailyRouteModel.findOne({
+      driverId: new Types.ObjectId(driverId),
+      date: this.getTodayDate(),
+    }).sort({ createdAt: -1 }).exec();
   }
 
   async startRoute(driverId: string): Promise<DailyRouteDocument> {
-    const route = await this.getTodayRoute(driverId);
+    const route = await this.getActiveRoute(driverId);
     if (!route) {
-      throw new NotFoundException('No daily route found for today');
+      throw new NotFoundException('No pending route found for today. Create a new route first.');
+    }
+    if (route.status !== 'planned') {
+      throw new NotFoundException('Route is already in progress');
     }
 
     route.status = 'in_progress';
@@ -95,9 +112,9 @@ export class DailyRoutesService {
   }
 
   async updateStopStatus(driverId: string, stopId: string, dto: UpdateStopStatusDto): Promise<DailyRouteDocument> {
-    const route = await this.getTodayRoute(driverId);
+    const route = await this.getActiveRoute(driverId);
     if (!route) {
-      throw new NotFoundException('No daily route found for today');
+      throw new NotFoundException('No active route found for today');
     }
 
     const stop = route.stops.find((item) => this.getStopId(item) === stopId);
@@ -125,9 +142,9 @@ export class DailyRoutesService {
   }
 
   async modifyActiveRoute(driverId: string, dto: ModifyRouteDto): Promise<DailyRouteDocument> {
-    const route = await this.getTodayRoute(driverId);
+    const route = await this.getActiveRoute(driverId);
     if (!route) {
-      throw new NotFoundException('No daily route found for today');
+      throw new NotFoundException('No active route found for today');
     }
 
     if (route.status === 'completed') {

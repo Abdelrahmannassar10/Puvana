@@ -33,7 +33,7 @@ export class AuthService {
 
     return {
       accessToken,
-      driver: { id: driver.id, name: driver.name, workerCode: driver.workerCode },
+      driver: { id: driver.id, name: driver.name, workerCode: driver.workerCode, isActive: driver.isActive, isOnline: driver.isOnline },
     };
   }
 

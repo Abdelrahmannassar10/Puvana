@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Admin, AdminSchema } from '../../models/admin/admin.schema';
 import { Driver, DriverSchema } from '../../models/driver/driver.schema';
 import { DailyRoute, DailyRouteSchema } from '../../models/daily-routes/daily-route.schema';
+import { DriverLocationsModule } from '../driver-locations/driver-locations.module';
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 
@@ -13,6 +14,7 @@ import { AdminService } from './admin.service';
       { name: Driver.name, schema: DriverSchema },
       { name: DailyRoute.name, schema: DailyRouteSchema },
     ]),
+    DriverLocationsModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],

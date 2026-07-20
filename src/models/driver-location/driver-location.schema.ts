@@ -14,7 +14,7 @@ export class DriverLocation {
   @Prop({ required: true })
   lng: number;
 
-  @Prop({ default: Date.now, index: true })
+  @Prop({ default: Date.now })
   timestamp: Date;
 }
 

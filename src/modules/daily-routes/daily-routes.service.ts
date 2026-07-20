@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { OrsService } from '../../common/utils/ors.service';
@@ -10,12 +10,20 @@ import { UpdateStopStatusDto } from './dto/update-stop-status.dto';
 import { ModifyRouteDto } from './dto/modify-route.dto';
 
 @Injectable()
-export class DailyRoutesService {
+export class DailyRoutesService implements OnModuleInit {
   constructor(
     @InjectModel(DailyRoute.name) private readonly dailyRouteModel: Model<DailyRouteDocument>,
     private readonly orsService: OrsService,
     private readonly savedLocationsService: SavedLocationsService,
   ) {}
+
+  async onModuleInit() {
+    try {
+      await this.dailyRouteModel.collection.dropIndex('driverId_1_date_1');
+    } catch {
+      // Index may have already been dropped or may not exist
+    }
+  }
 
   private getTodayDate(): string {
     return new Date().toISOString().slice(0, 10);

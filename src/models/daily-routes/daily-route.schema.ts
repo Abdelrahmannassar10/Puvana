@@ -33,7 +33,7 @@ export class RouteStop {
   distanceMeters?: number;
 
   @Prop()
-  arrivedAt?: Date;
+  startedAt?: Date;
 
   @Prop()
   completedAt?: Date;

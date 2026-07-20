@@ -109,7 +109,7 @@ export class DailyRoutesService implements OnModuleInit {
     if (route.stops.length) {
       const firstStop = route.stops[0];
       firstStop.status = 'in_progress';
-      firstStop.arrivedAt = new Date();
+      firstStop.startedAt = new Date();
       route.currentStopIndex = 0;
     } else {
       route.currentStopIndex = -1;
@@ -138,7 +138,7 @@ export class DailyRoutesService implements OnModuleInit {
 
     if (nextPending) {
       nextPending.status = 'in_progress';
-      nextPending.arrivedAt = new Date();
+      nextPending.startedAt = new Date();
       route.currentStopIndex = route.stops.findIndex((item) => this.getStopId(item) === this.getStopId(nextPending));
     } else {
       route.status = 'completed';

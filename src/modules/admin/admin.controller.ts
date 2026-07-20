@@ -8,7 +8,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { DriverLocationsService } from '../driver-locations/driver-locations.service';
 
 @Controller('admin')
-// @UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
@@ -16,13 +16,13 @@ export class AdminController {
   ) {}
 
   @Post('seed')
-  // @Roles('admin')
+  @Roles('admin')
   seedAdmin(@Body() dto: CreateAdminDto) {
     return this.adminService.ensureSeedAdmin(dto);
   }
 
   @Post('drivers')
-  // @Roles('admin')
+  @Roles('admin')
   createDriver(@Body() dto: CreateDriverAdminDto) {
     return this.adminService.createDriverAccount(dto);
   }
